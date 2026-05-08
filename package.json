@@ -1,0 +1,7 @@
+{
+  "name": "tiktok-discount-calculator",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "npx serve . -p $PORT"
+  }
+}

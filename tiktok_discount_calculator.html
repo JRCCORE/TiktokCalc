@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TikTok Discount Calc</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3e;
+    --accent: #fe2c55;
+    --accent2: #25f4ee;
+    --text: #f0f0f8;
+    --muted: #6b6b88;
+    --result-bg: #0d1a1a;
+    --result-border: #25f4ee33;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-mark {
+    width: 42px;
+    height: 42px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px #fe2c5540;
+    position: relative;
+    overflow: hidden;
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 16px; height: 16px;
+    background: var(--accent2);
+    border-radius: 50%;
+  }
+
+  .header-text h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .header-text span {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Section label */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+
+  /* Input card */
+  .input-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 44px 12px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .input-wrap input:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px #25f4ee18;
+  }
+
+  .input-unit {
+    position: absolute;
+    right: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  /* Two-col row */
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .field-row .field { margin-bottom: 0; }
+
+  /* Results */
+  .results-card {
+    background: var(--result-bg);
+    border: 1px solid var(--result-border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .results-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, #25f4ee22, transparent 70%);
+    pointer-events: none;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #1e2e2e;
+  }
+  .result-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .result-row:first-child { padding-top: 0; }
+
+  .result-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .result-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .result-value.primary {
+    font-size: 22px;
+    color: var(--accent2);
+    text-shadow: 0 0 20px #25f4ee60;
+  }
+
+  .result-value.warn {
+    color: var(--accent);
+    text-shadow: 0 0 20px #fe2c5540;
+  }
+
+  /* Divider result */
+  .result-divider {
+    margin: 8px 0;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Promo breakdown */
+  .promo-breakdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .promo-breakdown span { color: var(--text); font-weight: 500; }
+
+  /* Cap tag */
+  .cap-tag {
+    display: inline-block;
+    background: #fe2c5520;
+    border: 1px solid #fe2c5540;
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* Reset button */
+  .btn-reset {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+  .btn-reset:active {
+    background: var(--card);
+    color: var(--text);
+  }
+
+  /* Footer note */
+  .note {
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Glow pulse on main result */
+  @keyframes pulse-glow {
+    0%, 100% { text-shadow: 0 0 20px #25f4ee60; }
+    50% { text-shadow: 0 0 35px #25f4ee99; }
+  }
+  .result-value.primary { animation: pulse-glow 3s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-mark">TT</div>
+    <div class="header-text">
+      <h1>Discount Calculator</h1>
+      <span>TikTok Shop · Promo Planner</span>
+    </div>
+  </header>
+
+  <!-- Inputs -->
+  <div class="section-label">Coupon Settings</div>
+  <div class="input-card">
+    <div class="field-row">
+      <div class="field">
+        <label>Coupon Value</label>
+        <div class="input-wrap">
+          <input type="number" id="coupon" value="0.7" min="0" max="1" step="0.01" inputmode="decimal">
+          <span class="input-unit">%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Max Discount</label>
+        <div class="input-wrap">
+          <input type="number" id="maxDiscount" value="180" min="0" step="1" inputmode="decimal">
+          <span class="input-unit">€</span>
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Amount Loaded</label>
+        <div class="input-wrap">
+          <input type="number" id="amountLoaded" value="66.5" min="0" step="0.01" inputmode="decimal">
+          <span class="input-unit">£</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Exc. Rate (£→€)</label>
+        <div class="input-wrap">
+          <input type="number" id="excRate" value="1.16" min="0" step="0.001" inputmode="decimal">
+          <span class="input-unit">×</span>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Number of Days</label>
+      <div class="input-wrap">
+        <input type="number" id="numDays" value="8" min="1" step="1" inputmode="numeric">
+        <span class="input-unit">d</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="section-label" style="margin-top:20px;">Results</div>
+  <div class="results-card">
+
+    <div class="result-row">
+      <span class="result-label">Converted Amount</span>
+      <span class="result-value" id="r-converted">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Efficient Amount</span>
+      <span class="result-value" id="r-efficient">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Promo Amount <span class="cap-tag" id="cap-tag" style="display:none">CAPPED</span></span>
+      <span class="result-value primary" id="r-promo">—</span>
+    </div>
+
+    <hr class="result-divider">
+
+    <div class="result-row">
+      <span class="result-label">Amount Per Day</span>
+      <span class="result-value" id="r-perday">—</span>
+    </div>
+
+  </div>
+
+  <div id="breakdown-wrap" class="promo-breakdown" style="margin-bottom:12px; display:none">
+    <div id="breakdown-text"></div>
+  </div>
+
+  <button class="btn-reset" onclick="resetDefaults()">↺ Reset to Defaults</button>
+
+  <div class="note">Formulas replicated from your Excel sheet · All calculations local</div>
+</div>
+
+<script>
+  const ids = ['coupon','maxDiscount','amountLoaded','excRate','numDays'];
+  ids.forEach(id => document.getElementById(id).addEventListener('input', calculate));
+
+  function calculate() {
+    const coupon      = parseFloat(document.getElementById('coupon').value) || 0;
+    const maxDiscount = parseFloat(document.getElementById('maxDiscount').value) || 0;
+    const loaded      = parseFloat(document.getElementById('amountLoaded').value) || 0;
+    const excRate     = parseFloat(document.getElementById('excRate').value) || 1;
+    const days        = parseFloat(document.getElementById('numDays').value) || 1;
+
+    // B4*C4
+    const converted = loaded * excRate;
+
+    // Efficient amount = maxDiscount * ((1 - coupon) / coupon)
+    // e.g. 180 * (0.3/0.7) = 77.14
+    const efficient = coupon > 0 ? maxDiscount * ((1 - coupon) / coupon) : 0;
+
+    // Promo = efficient + MIN(efficient * (coupon / (1-coupon)), maxDiscount)
+    const discountPart = coupon < 1 ? efficient * (coupon / (1 - coupon)) : 0;
+    const discountApplied = Math.min(discountPart, maxDiscount);
+    const promo = efficient + discountApplied;
+    const capped = discountPart > maxDiscount;
+
+    // B7/B9
+    const perDay = days > 0 ? promo / days : 0;
+
+    document.getElementById('r-converted').textContent = '£' + fmtNum(loaded) + ' → ' + fmt(converted);
+    document.getElementById('r-efficient').textContent = fmt(efficient);
+    document.getElementById('r-promo').textContent = fmt(promo);
+    document.getElementById('r-perday').textContent = fmt(perDay) + ' / day';
+
+    // Cap tag
+    const capTag = document.getElementById('cap-tag');
+    capTag.style.display = capped ? 'inline-block' : 'none';
+
+    // Promo breakdown
+    const bwrap = document.getElementById('breakdown-wrap');
+    const btext = document.getElementById('breakdown-text');
+    bwrap.style.display = 'block';
+    btext.innerHTML = `
+      Efficient ${fmt(efficient)} + discount ${fmt(discountApplied)}
+      ${capped ? `<br><span style="color:var(--accent)">⚠ Discount capped at ${fmt(maxDiscount)} (raw ${fmt(discountPart)})</span>` : ''}
+      <br>= Promo <span>${fmt(promo)}</span> over <span>${days}</span> day${days !== 1 ? 's' : ''}
+    `;
+
+    // Warn per-day if capped
+    document.getElementById('r-perday').className = 'result-value' + (capped ? ' warn' : '');
+  }
+
+  function fmt(n) {
+    if (!isFinite(n)) return '—';
+    return '€' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  function fmtNum(n) {
+    if (!isFinite(n)) return '—';
+    return n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  function resetDefaults() {
+    document.getElementById('coupon').value = '0.7';
+    document.getElementById('maxDiscount').value = '180';
+    document.getElementById('amountLoaded').value = '66.5';
+    document.getElementById('excRate').value = '1.16';
+    document.getElementById('numDays').value = '8';
+    calculate();
+  }
+
+  calculate();
+</script>
+</body>
+</html>
